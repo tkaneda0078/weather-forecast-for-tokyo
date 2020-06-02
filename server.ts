@@ -1,27 +1,33 @@
-import { serve } from "https://deno.land/std@0.53.0/http/server.ts";
-import { readFileStr } from "https://deno.land/std/fs/read_file_str.ts";
+import { Application, Router, send } from "https://deno.land/x/oak/mod.ts";
+import { viewEngine, engineFactory, adapterFactory } from "https://deno.land/x/view_engine/mod.ts";
 import { config } from "https://deno.land/x/dotenv/mod.ts"
 import ky from 'https://deno.land/x/ky/index.js';
 
+const app = new Application();
+const router = new Router();
 const env: any = config();
-const s = serve({ port: 8000 });
-console.log("http://localhost:8000/");
+
+const ejsEngine = await engineFactory.getEjsEngine();
+const oakAdapter = await adapterFactory.getOakAdapter();
+
+app.use(viewEngine(oakAdapter, ejsEngine));
+
+router.get('/', (ctx: any) => {
+  ctx.render('./public/index.ejs', { data: { msg: 'ddd' } })
+});
+
+app.use(router.routes());
+app.use(router.allowedMethods());
 
 /**
  * @param url 
+ * @TODO class化
  */
 async function getWeatherForecast(url: string): Promise<any> {
   return await ky.get(url).json();
 }
 
-async function getHtml(): Promise<any> {
-  const body = await readFileStr('./public/index.html');
-
-  return { body }
-}
-
 getWeatherForecast(`${env.BASE_URL}?q=Tokyo,jp&appid=${env.API_KEY}`);
 
-for await (const req of s) {
-  req.respond(await getHtml());
-}
+console.log("http://localhost:8000/");
+await app.listen({ port: 8000 });
