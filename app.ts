@@ -13,7 +13,7 @@ const oakAdapter = await adapterFactory.getOakAdapter();
 app.use(viewEngine(oakAdapter, ejsEngine));
 
 router.get('/', (ctx: any) => {
-  ctx.render('./public/index.ejs', { data: { msg: 'ddd' } })
+  ctx.render('./public/index.ejs', { data: { message: 'ddd' } })
 });
 
 app.use(router.routes());
